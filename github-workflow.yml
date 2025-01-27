@@ -1,0 +1,65 @@
+name: 'Deploy Helm Chart to GKE with Terraform'
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  deploy:
+    name: 'Deploy Helm Chart to GKE'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      # Checkout the repository
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      # Authenticate to Google Cloud using Workload Identity Federation
+      - name: 'Authenticate to Google Cloud'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
+
+      # Setup Google Cloud CLI
+      - name: 'Set up Google Cloud SDK'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      # Install Terraform CLI
+      - name: 'Set up Terraform'
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.6.0' # Ensure you specify a valid version
+
+      # Initialize Terraform
+      - name: 'Terraform Init'
+        run: terraform init
+
+      # Apply Terraform (non-interactive)
+      - name: 'Terraform Apply'
+        run: |
+          terraform apply -auto-approve \
+            -var "project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var "region=${{ secrets.GCP_REGION }}" \
+            -var "zone=${{ secrets.GCP_ZONE }}" \
+            -var "reference_registry=${{ secrets.REFERENCE_REGISTRY }}" \
+            -var "instance_registry=${{ secrets.INSTANCE_REGISTRY }}" \
+            -var "helm_repo_url=${{ secrets.INSTANCE_REGISTRY }}/helm-charts" \
+            -var "chart_name=${{ secrets.HELM_CHART_NAME }}" \
+            -var "chart_version=${{ secrets.HELM_CHART_VERSION }}" \
+            -var "dependency_service_name=${{ secrets.DEPENDENCY_SERVICE_NAME }}" \
+            -var "gke_cluster_name=${{ secrets.GKE_CLUSTER_NAME }}" \
+            -var "service_account_email=${{ secrets.SERVICE_ACCOUNT_EMAIL }}"
+
+      # Verify Deployment
+      - name: 'Verify Deployment'
+        run: |
+          kubectl get pods --namespace default
+          kubectl get services --namespace default
