@@ -12,16 +12,16 @@ Este repositorio contiene el Helm Chart utilizado para desplegar la aplicación 
 
 ```bash
 git clone https://github.com/Randyavila/prueba-tecnica-devops/tree/main
-cd prueba-tecnica
+cd prueba-tecnica-devops
 ```
 
 ### Paso 2: Ingresa a la ruta del Helm Chart
 
 ```bash
-cd prueba-tecnica
+cd prueba-tecnica-devops
 ```
 ### Paso 3: Instalar Helm Chart
 
 ```bash
-helm install prueba-tecnica .
+helm install prueba-tecnica-devops .
 ```
